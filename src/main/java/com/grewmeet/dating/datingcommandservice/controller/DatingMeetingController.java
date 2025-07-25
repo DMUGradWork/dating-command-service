@@ -1,10 +1,15 @@
 package com.grewmeet.dating.datingcommandservice.controller;
 
+import com.grewmeet.dating.datingcommandservice.dto.request.CreateDatingMeetingRequest;
+import com.grewmeet.dating.datingcommandservice.dto.response.DatingMeetingResponse;
+import com.grewmeet.dating.datingcommandservice.service.DatingMeetingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,19 +18,22 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/events")
-@Tag(name = "Event", description = "데이팅 이벤트 관리 API")
-public class EventController {
+@Tag(name = "DatingMeeting", description = "데이팅 미팅 관리 API")
+@RequiredArgsConstructor
+public class DatingMeetingController {
+
+    private final DatingMeetingService datingMeetingService;
 
     @PostMapping
-    @Operation(summary = "새 데이팅 이벤트 생성", description = "새로운 데이팅 이벤트를 생성합니다.")
+    @Operation(summary = "새 데이팅 미팅 생성", description = "새로운 데이팅 미팅을 생성합니다.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "이벤트 생성 성공"),
+            @ApiResponse(responseCode = "201", description = "미팅 생성 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
-            @ApiResponse(responseCode = "409", description = "이벤트 생성 중 충돌 발생")
+            @ApiResponse(responseCode = "409", description = "미팅 생성 중 충돌 발생")
     })
-    public ResponseEntity<Map<String, Object>> createEvent(@RequestBody Map<String, Object> request) {
-        // TODO: EventService.createEvent() 구현 예정
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+    public ResponseEntity<DatingMeetingResponse> createDatingMeeting(@Valid @RequestBody CreateDatingMeetingRequest request) {
+        DatingMeetingResponse response = datingMeetingService.createDatingMeeting(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{eventId}")
