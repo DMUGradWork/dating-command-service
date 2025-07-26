@@ -1,30 +1,26 @@
-package com.grewmeet.dating.datingcommandservice.dto.response;
+package com.grewmeet.dating.datingcommandservice.saga;
 
 import com.grewmeet.dating.datingcommandservice.domain.DatingMeeting;
 import java.time.LocalDateTime;
 
-public record DatingMeetingResponse(
-        Long id,
+public record DatingMeetingCreated(
+        Long datingMeetingId,
         String title,
         String description,
         LocalDateTime meetingDateTime,
         String location,
         Integer maxParticipants,
-        Integer currentParticipants,
-        LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime createdAt
 ) {
-    public static DatingMeetingResponse from(DatingMeeting datingMeeting) {
-        return new DatingMeetingResponse(
+    public static DatingMeetingCreated from(DatingMeeting datingMeeting) {
+        return new DatingMeetingCreated(
                 datingMeeting.getId(),
                 datingMeeting.getTitle(),
                 datingMeeting.getDescription(),
                 datingMeeting.getMeetingDateTime(),
                 datingMeeting.getLocation(),
                 datingMeeting.getMaxParticipants(),
-                datingMeeting.getCurrentParticipantCount(),
-                datingMeeting.getCreatedAt(),
-                datingMeeting.getUpdatedAt()
+                datingMeeting.getCreatedAt()
         );
     }
 }
