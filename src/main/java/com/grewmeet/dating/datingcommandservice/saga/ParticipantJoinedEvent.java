@@ -1,4 +1,4 @@
-package com.grewmeet.dating.datingcommandservice.dto.event;
+package com.grewmeet.dating.datingcommandservice.saga;
 
 import java.time.LocalDateTime;
 

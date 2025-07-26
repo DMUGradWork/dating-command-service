@@ -1,4 +1,4 @@
-package com.grewmeet.dating.datingcommandservice.service;
+package com.grewmeet.dating.datingcommandservice.event;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grewmeet.dating.datingcommandservice.domain.Outbox;
