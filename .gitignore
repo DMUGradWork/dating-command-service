@@ -35,3 +35,9 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# MCP and development tools
+.mcp.json
+.claude/
+.serena/
+setup-mcp.sh
