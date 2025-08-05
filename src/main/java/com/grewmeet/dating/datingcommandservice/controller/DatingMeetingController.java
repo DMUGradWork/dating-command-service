@@ -1,6 +1,7 @@
 package com.grewmeet.dating.datingcommandservice.controller;
 
 import com.grewmeet.dating.datingcommandservice.dto.request.CreateDatingMeetingRequest;
+import com.grewmeet.dating.datingcommandservice.dto.request.UpdateDatingMeetingRequest;
 import com.grewmeet.dating.datingcommandservice.dto.response.DatingMeetingResponse;
 import com.grewmeet.dating.datingcommandservice.service.DatingMeetingService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -36,19 +37,19 @@ public class DatingMeetingController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PutMapping("/{eventId}")
-    @Operation(summary = "이벤트 정보 수정", description = "기존 데이팅 이벤트의 정보를 수정합니다.")
+    @PatchMapping("/{eventId}")
+    @Operation(summary = "이벤트 정보 부분 수정", description = "기존 데이팅 이벤트의 정보를 부분적으로 수정합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "이벤트 수정 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
             @ApiResponse(responseCode = "404", description = "이벤트를 찾을 수 없음"),
             @ApiResponse(responseCode = "409", description = "이벤트 수정 중 충돌 발생")
     })
-    public ResponseEntity<Map<String, Object>> updateEvent(
+    public ResponseEntity<DatingMeetingResponse> updateEvent(
             @Parameter(description = "이벤트 ID") @PathVariable String eventId,
-            @RequestBody Map<String, Object> request) {
-        // TODO: EventService.updateEvent() 구현 예정
-        return ResponseEntity.ok().build();
+            @Valid @RequestBody UpdateDatingMeetingRequest request) {
+        DatingMeetingResponse response = datingMeetingService.updateDatingMeeting(eventId, request);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{eventId}")

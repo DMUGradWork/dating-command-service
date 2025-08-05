@@ -2,7 +2,9 @@ package com.grewmeet.dating.datingcommandservice.service;
 
 import com.grewmeet.dating.datingcommandservice.domain.DatingMeeting;
 import com.grewmeet.dating.datingcommandservice.saga.DatingMeetingCreated;
+import com.grewmeet.dating.datingcommandservice.saga.DatingMeetingUpdated;
 import com.grewmeet.dating.datingcommandservice.dto.request.CreateDatingMeetingRequest;
+import com.grewmeet.dating.datingcommandservice.dto.request.UpdateDatingMeetingRequest;
 import com.grewmeet.dating.datingcommandservice.dto.response.DatingMeetingResponse;
 import com.grewmeet.dating.datingcommandservice.event.OutboxService;
 import com.grewmeet.dating.datingcommandservice.repository.DatingMeetingRepository;
@@ -39,5 +41,30 @@ public class DatingMeetingServiceImpl implements DatingMeetingService {
         log.info("Dating meeting created: id={}, title={}", savedDatingMeeting.getId(), savedDatingMeeting.getTitle());
         
         return DatingMeetingResponse.from(savedDatingMeeting);
+    }
+
+    @Override
+    public DatingMeetingResponse updateDatingMeeting(String eventId, UpdateDatingMeetingRequest request) {
+        Long id = Long.parseLong(eventId);
+        DatingMeeting datingMeeting = datingMeetingRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Dating meeting not found: " + eventId));
+
+        datingMeeting.update(
+                request.title(),
+                request.description(),
+                request.meetingDateTime(),
+                request.location(),
+                request.maxParticipants()
+        );
+
+        DatingMeeting updatedDatingMeeting = datingMeetingRepository.save(datingMeeting);
+
+        DatingMeetingUpdated datingMeetingUpdated = DatingMeetingUpdated.from(updatedDatingMeeting);
+
+        outboxService.publishEvent("DatingMeetingUpdated", "DatingMeeting", updatedDatingMeeting.getId(), datingMeetingUpdated);
+
+        log.info("Dating meeting updated: id={}, title={}", updatedDatingMeeting.getId(), updatedDatingMeeting.getTitle());
+
+        return DatingMeetingResponse.from(updatedDatingMeeting);
     }
 }

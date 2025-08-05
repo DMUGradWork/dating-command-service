@@ -57,11 +57,21 @@ public class DatingMeeting extends BaseEntity {
     }
 
     public void update(String title, String description, LocalDateTime meetingDateTime, String location, Integer maxParticipants) {
-        this.title = title;
-        this.description = description;
-        this.meetingDateTime = meetingDateTime;
-        this.location = location;
-        this.maxParticipants = maxParticipants;
+        if (title != null) {
+            this.title = title;
+        }
+        if (description != null) {
+            this.description = description;
+        }
+        if (meetingDateTime != null) {
+            this.meetingDateTime = meetingDateTime;
+        }
+        if (location != null) {
+            this.location = location;
+        }
+        if (maxParticipants != null) {
+            this.maxParticipants = maxParticipants;
+        }
     }
 
     public boolean isParticipantsFull() {
