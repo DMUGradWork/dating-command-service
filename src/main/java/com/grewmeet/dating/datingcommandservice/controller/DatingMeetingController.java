@@ -32,7 +32,8 @@ public class DatingMeetingController {
             @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
             @ApiResponse(responseCode = "409", description = "미팅 생성 중 충돌 발생")
     })
-    public ResponseEntity<DatingMeetingResponse> createDatingMeeting(@Valid @RequestBody CreateDatingMeetingRequest request) {
+    public ResponseEntity<DatingMeetingResponse> createDatingMeeting(
+            @Valid @RequestBody CreateDatingMeetingRequest request) {
         DatingMeetingResponse response = datingMeetingService.createDatingMeeting(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -59,8 +60,9 @@ public class DatingMeetingController {
             @ApiResponse(responseCode = "404", description = "이벤트를 찾을 수 없음"),
             @ApiResponse(responseCode = "409", description = "참여자가 있어 삭제할 수 없음")
     })
-    public ResponseEntity<Void> deleteEvent(@Parameter(description = "이벤트 ID") @PathVariable String eventId) {
-        // TODO: EventService.deleteEvent() 구현 예정
+    public ResponseEntity<Void> deleteEvent(
+            @Parameter(description = "이벤트 ID") @PathVariable String eventId) {
+        datingMeetingService.deleteDatingMeeting(eventId);
         return ResponseEntity.noContent().build();
     }
 

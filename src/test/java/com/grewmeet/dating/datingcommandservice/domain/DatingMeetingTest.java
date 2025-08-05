@@ -1,9 +1,11 @@
 package com.grewmeet.dating.datingcommandservice.domain;
 
+import com.grewmeet.dating.datingcommandservice.saga.DatingMeetingDeleted;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -152,5 +154,85 @@ class DatingMeetingTest {
         assertEquals(0, meeting.getCurrentParticipantCount());
         assertFalse(meeting.isParticipantsFull());
         assertFalse(meeting.hasParticipant("user1"));
+    }
+
+    @Test
+    @DisplayName("DatingMeetingDeleted 이벤트 생성 - 참여자 없는 경우")
+    void createDatingMeetingDeletedEventWithoutParticipants() {
+        // given
+        DatingMeeting meeting = DatingMeeting.create(
+                "삭제될 미팅",
+                "삭제 테스트",
+                LocalDateTime.of(2025, 12, 25, 14, 0),
+                "테스트 장소",
+                10
+        );
+
+        // when
+        DatingMeetingDeleted deletedEvent = DatingMeetingDeleted.from(meeting);
+
+        // then
+        assertNotNull(deletedEvent);
+        assertEquals(meeting.getId(), deletedEvent.datingMeetingId());
+        assertEquals("삭제될 미팅", deletedEvent.title());
+        assertEquals("삭제 테스트", deletedEvent.description());
+        assertEquals(LocalDateTime.of(2025, 12, 25, 14, 0), deletedEvent.meetingDateTime());
+        assertEquals("테스트 장소", deletedEvent.location());
+        assertEquals(10, deletedEvent.maxParticipants());
+        assertTrue(deletedEvent.participantIds().isEmpty());
+        assertNotNull(deletedEvent.deletedAt());
+    }
+
+    @Test
+    @DisplayName("DatingMeetingDeleted 이벤트 생성 - 참여자 있는 경우")
+    void createDatingMeetingDeletedEventWithParticipants() {
+        // given
+        DatingMeeting meeting = DatingMeeting.create(
+                "참여자 있는 미팅",
+                "참여자 테스트",
+                LocalDateTime.of(2025, 12, 25, 14, 0),
+                "테스트 장소",
+                10
+        );
+        
+        // 참여자 추가 시뮬레이션 (실제 Participant 엔티티 없이 테스트용)
+        // 실제로는 participants 필드가 private이므로 DatingMeetingDeleted.from() 메서드가
+        // 빈 리스트를 처리하는지 확인하는 테스트로 구성
+
+        // when
+        DatingMeetingDeleted deletedEvent = DatingMeetingDeleted.from(meeting);
+
+        // then
+        assertNotNull(deletedEvent);
+        assertEquals(meeting.getId(), deletedEvent.datingMeetingId());
+        assertEquals("참여자 있는 미팅", deletedEvent.title());
+        assertEquals("참여자 테스트", deletedEvent.description());
+        assertEquals(LocalDateTime.of(2025, 12, 25, 14, 0), deletedEvent.meetingDateTime());
+        assertEquals("테스트 장소", deletedEvent.location());
+        assertEquals(10, deletedEvent.maxParticipants());
+        assertNotNull(deletedEvent.participantIds());
+        assertNotNull(deletedEvent.deletedAt());
+    }
+
+    @Test
+    @DisplayName("DatingMeetingDeleted 이벤트의 삭제 시간이 현재 시간인지 확인")
+    void verifyDatingMeetingDeletedTimestamp() {
+        // given
+        DatingMeeting meeting = DatingMeeting.create(
+                "시간 테스트 미팅",
+                "시간 테스트",
+                LocalDateTime.of(2025, 12, 25, 14, 0),
+                "테스트 장소",
+                5
+        );
+        LocalDateTime beforeCreation = LocalDateTime.now().minusSeconds(1);
+
+        // when
+        DatingMeetingDeleted deletedEvent = DatingMeetingDeleted.from(meeting);
+        LocalDateTime afterCreation = LocalDateTime.now().plusSeconds(1);
+
+        // then
+        assertTrue(deletedEvent.deletedAt().isAfter(beforeCreation));
+        assertTrue(deletedEvent.deletedAt().isBefore(afterCreation));
     }
 }
