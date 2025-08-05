@@ -5,8 +5,7 @@ import com.grewmeet.dating.datingcommandservice.dto.request.UpdateDatingMeetingR
 import com.grewmeet.dating.datingcommandservice.dto.response.DatingMeetingResponse;
 
 public interface DatingMeetingService {
-    
     DatingMeetingResponse createDatingMeeting(CreateDatingMeetingRequest request);
-    
     DatingMeetingResponse updateDatingMeeting(String eventId, UpdateDatingMeetingRequest request);
+    void deleteDatingMeeting(String eventId);
 }
