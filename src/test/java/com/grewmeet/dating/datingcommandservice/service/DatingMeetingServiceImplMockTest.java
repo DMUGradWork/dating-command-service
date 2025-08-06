@@ -143,6 +143,7 @@ class DatingMeetingServiceImplTest {
 
         // when & then
         assertThatThrownBy(() -> datingMeetingService.updateDatingMeeting("invalid", request))
-                .isInstanceOf(NumberFormatException.class);
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Invalid event ID format");
     }
 }
