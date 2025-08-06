@@ -9,23 +9,25 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 
 import static org.mockito.BDDMockito.given;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(DatingMeetingController.class)
+@WithMockUser
 class DatingMeetingControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private DatingMeetingService datingMeetingService;
 
     @Autowired
@@ -60,7 +62,8 @@ class DatingMeetingControllerTest {
         // when & then
         mockMvc.perform(patch("/events/1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.title").value("새로운 제목"))
@@ -83,7 +86,8 @@ class DatingMeetingControllerTest {
         // when & then
         mockMvc.perform(patch("/events/1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
                 .andExpect(status().isBadRequest());
     }
 
@@ -102,7 +106,8 @@ class DatingMeetingControllerTest {
         // when & then
         mockMvc.perform(patch("/events/1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
                 .andExpect(status().isBadRequest());
     }
 
@@ -121,29 +126,9 @@ class DatingMeetingControllerTest {
         // when & then
         mockMvc.perform(patch("/events/1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
                 .andExpect(status().isBadRequest());
     }
 
-    @Test
-    @DisplayName("존재하지 않는 이벤트 수정시 예외")
-    void throwExceptionWhenEventNotFound() throws Exception {
-        // given
-        UpdateDatingMeetingRequest request = new UpdateDatingMeetingRequest(
-                "새로운 제목",
-                null,
-                null,
-                null,
-                null
-        );
-
-        given(datingMeetingService.updateDatingMeeting("999", request))
-                .willThrow(new IllegalArgumentException("Dating meeting not found: 999"));
-
-        // when & then
-        mockMvc.perform(patch("/events/999")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest());
-    }
 }

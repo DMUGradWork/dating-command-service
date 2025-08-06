@@ -9,7 +9,7 @@ import java.util.Optional;
 @Repository
 public interface ParticipantRepository extends JpaRepository<Participant, Long> {
 
-    Optional<Participant> findByDatingMeetingIdAndUserIdAndStatus(Long datingMeetingId, String userId, Participant.ParticipantStatus status);
+    Optional<Participant> findByDatingMeetingIdAndUserIdAndStatus(Long datingMeetingId, Long userId, Participant.ParticipantStatus status);
     
     Optional<Participant> findByIdAndDatingMeetingId(Long participantId, Long datingMeetingId);
 }

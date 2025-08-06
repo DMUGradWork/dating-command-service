@@ -78,7 +78,7 @@ public class DatingMeeting extends BaseEntity {
         return this.participants.size() >= this.maxParticipants;
     }
 
-    public boolean hasParticipant(String userId) {
+    public boolean hasParticipant(Long userId) {
         return this.participants.stream()
                 .anyMatch(participant -> participant.getUserId().equals(userId) && participant.isActive());
     }

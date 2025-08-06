@@ -5,6 +5,6 @@ import java.time.LocalDateTime;
 public record ParticipantJoinedEvent(
         Long datingMeetingId,
         Long participantId,
-        String userId,
+        Long userId,
         LocalDateTime joinedAt
 ) {}
