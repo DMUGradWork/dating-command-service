@@ -1,8 +1,10 @@
 package com.grewmeet.dating.datingcommandservice.controller;
 
 import com.grewmeet.dating.datingcommandservice.dto.request.CreateDatingMeetingRequest;
+import com.grewmeet.dating.datingcommandservice.dto.request.JoinEventRequest;
 import com.grewmeet.dating.datingcommandservice.dto.request.UpdateDatingMeetingRequest;
 import com.grewmeet.dating.datingcommandservice.dto.response.DatingMeetingResponse;
+import com.grewmeet.dating.datingcommandservice.dto.response.ParticipantResponse;
 import com.grewmeet.dating.datingcommandservice.service.DatingMeetingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -15,7 +17,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
 
 @RestController
 @RequestMapping("/events")
@@ -74,11 +75,11 @@ public class DatingMeetingController {
             @ApiResponse(responseCode = "404", description = "이벤트를 찾을 수 없음"),
             @ApiResponse(responseCode = "409", description = "이미 참여중이거나 정원 초과")
     })
-    public ResponseEntity<Map<String, Object>> joinEvent(
+    public ResponseEntity<ParticipantResponse> joinEvent(
             @Parameter(description = "이벤트 ID") @PathVariable String eventId,
-            @RequestBody Map<String, Object> request) {
-        // TODO: EventService.joinEvent() 구현 예정
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+            @Valid @RequestBody JoinEventRequest request) {
+        ParticipantResponse response = datingMeetingService.joinEvent(eventId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @DeleteMapping("/{eventId}/participants/{participantId}")
@@ -90,8 +91,8 @@ public class DatingMeetingController {
     })
     public ResponseEntity<Void> leaveEvent(
             @Parameter(description = "이벤트 ID") @PathVariable String eventId,
-            @Parameter(description = "참여자 ID") @PathVariable String participantId) {
-        // TODO: EventService.leaveEvent() 구현 예정
+            @Parameter(description = "참여자 ID") @PathVariable Long participantId) {
+        datingMeetingService.leaveEvent(eventId, participantId);
         return ResponseEntity.noContent().build();
     }
 }

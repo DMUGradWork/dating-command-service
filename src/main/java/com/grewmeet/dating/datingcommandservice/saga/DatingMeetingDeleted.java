@@ -12,11 +12,11 @@ public record DatingMeetingDeleted(
         LocalDateTime meetingDateTime,
         String location,
         Integer maxParticipants,
-        List<String> participantIds,
+        List<Long> participantIds,
         LocalDateTime deletedAt
 ) {
     public static DatingMeetingDeleted from(DatingMeeting datingMeeting) {
-        List<String> participantIds = datingMeeting.getParticipants().stream()
+        List<Long> participantIds = datingMeeting.getParticipants().stream()
                 .filter(Participant::isActive)
                 .map(Participant::getUserId)
                 .toList();

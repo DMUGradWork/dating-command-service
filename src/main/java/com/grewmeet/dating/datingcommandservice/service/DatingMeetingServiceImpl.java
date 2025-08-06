@@ -1,14 +1,20 @@
 package com.grewmeet.dating.datingcommandservice.service;
 
 import com.grewmeet.dating.datingcommandservice.domain.DatingMeeting;
+import com.grewmeet.dating.datingcommandservice.domain.Participant;
 import com.grewmeet.dating.datingcommandservice.saga.DatingMeetingCreated;
 import com.grewmeet.dating.datingcommandservice.saga.DatingMeetingDeleted;
 import com.grewmeet.dating.datingcommandservice.saga.DatingMeetingUpdated;
+import com.grewmeet.dating.datingcommandservice.saga.ParticipantJoinedEvent;
+import com.grewmeet.dating.datingcommandservice.saga.ParticipantLeftEvent;
 import com.grewmeet.dating.datingcommandservice.dto.request.CreateDatingMeetingRequest;
+import com.grewmeet.dating.datingcommandservice.dto.request.JoinEventRequest;
 import com.grewmeet.dating.datingcommandservice.dto.request.UpdateDatingMeetingRequest;
 import com.grewmeet.dating.datingcommandservice.dto.response.DatingMeetingResponse;
+import com.grewmeet.dating.datingcommandservice.dto.response.ParticipantResponse;
 import com.grewmeet.dating.datingcommandservice.event.OutboxService;
 import com.grewmeet.dating.datingcommandservice.repository.DatingMeetingRepository;
+import com.grewmeet.dating.datingcommandservice.repository.ParticipantRepository;
 import com.grewmeet.dating.datingcommandservice.util.IdParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class DatingMeetingServiceImpl implements DatingMeetingService {
 
     private final DatingMeetingRepository datingMeetingRepository;
+    private final ParticipantRepository participantRepository;
     private final OutboxService outboxService;
 
     @Override
@@ -87,6 +94,75 @@ public class DatingMeetingServiceImpl implements DatingMeetingService {
 
         log.info("Dating meeting deleted: id={}, title={}, participantCount={}",
                 id, datingMeetingDeleted.title(), datingMeetingDeleted.participantIds().size());
+    }
+
+    @Override
+    public ParticipantResponse joinEvent(String eventId, JoinEventRequest request) {
+        Long id = IdParser.parseEventId(eventId);
+        DatingMeeting datingMeeting = getDatingMeeting(eventId, id);
+        
+        // 비즈니스 룰 검증
+        if (datingMeeting.hasParticipant(request.userId())) {
+            throw new IllegalStateException("User is already participating in this event: " + request.userId());
+        }
+        
+        if (datingMeeting.isParticipantsFull()) {
+            throw new IllegalStateException("Event is full. Cannot join: " + eventId);
+        }
+        
+        // 참여자 생성 및 저장
+        Participant participant = Participant.create(request.userId(), datingMeeting);
+        Participant savedParticipant = participantRepository.save(participant);
+        
+        // 이벤트 발행
+        ParticipantJoinedEvent joinedEvent = new ParticipantJoinedEvent(
+                datingMeeting.getId(),
+                savedParticipant.getId(),
+                savedParticipant.getUserId(),
+                savedParticipant.getCreatedAt()
+        );
+        
+        outboxService.publishEvent("ParticipantJoined", "Participant", savedParticipant.getId(), joinedEvent);
+        
+        log.info("User joined event: userId={}, eventId={}, participantId={}", 
+                request.userId(), eventId, savedParticipant.getId());
+        
+        return new ParticipantResponse(
+                savedParticipant.getId(),
+                savedParticipant.getUserId(),
+                savedParticipant.getStatus(),
+                savedParticipant.getCreatedAt()
+        );
+    }
+    
+    @Override
+    public void leaveEvent(String eventId, Long participantId) {
+        Long eventIdLong = IdParser.parseEventId(eventId);
+        DatingMeeting datingMeeting = getDatingMeeting(eventId, eventIdLong);
+        
+        Participant participant = participantRepository.findByIdAndDatingMeetingId(participantId, eventIdLong)
+                .orElseThrow(() -> new IllegalArgumentException("Participant not found: " + participantId));
+        
+        if (!participant.isActive()) {
+            throw new IllegalStateException("Participant is already withdrawn: " + participantId);
+        }
+        
+        // 참여자 탈퇴 처리
+        participant.withdraw();
+        participantRepository.save(participant);
+        
+        // 이벤트 발행
+        ParticipantLeftEvent leftEvent = new ParticipantLeftEvent(
+                datingMeeting.getId(),
+                participant.getId(),
+                participant.getUserId(),
+                java.time.LocalDateTime.now()
+        );
+        
+        outboxService.publishEvent("ParticipantLeft", "Participant", participant.getId(), leftEvent);
+        
+        log.info("User left event: userId={}, eventId={}, participantId={}", 
+                participant.getUserId(), eventId, participantId);
     }
 
     private DatingMeeting getDatingMeeting(String eventId, Long id) {

@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 
 public record ParticipantResponse(
         Long id,
-        String userId,
+        Long userId,
         Participant.ParticipantStatus status,
         LocalDateTime joinedAt
 ) {}

@@ -153,7 +153,7 @@ class DatingMeetingTest {
         // when & then
         assertEquals(0, meeting.getCurrentParticipantCount());
         assertFalse(meeting.isParticipantsFull());
-        assertFalse(meeting.hasParticipant("user1"));
+        assertFalse(meeting.hasParticipant(1L));
     }
 
     @Test
