@@ -17,7 +17,7 @@ public class Outbox extends BaseEntity {
 
     @NotBlank
     @Column(nullable = false, unique = true)
-    private String eventId = UUID.randomUUID().toString();
+    private String outboxEventId = UUID.randomUUID().toString();
 
     @NotBlank
     @Column(nullable = false, length = 100)
