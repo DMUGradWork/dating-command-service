@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/events")
@@ -34,8 +35,9 @@ public class DatingMeetingController {
             @ApiResponse(responseCode = "409", description = "미팅 생성 중 충돌 발생")
     })
     public ResponseEntity<DatingMeetingResponse> createDatingMeeting(
+            @Parameter(description = "인증된 사용자 ID (호스트)", required = true) @RequestHeader("X-User-Id") UUID userId,
             @Valid @RequestBody CreateDatingMeetingRequest request) {
-        DatingMeetingResponse response = datingMeetingService.createDatingMeeting(request);
+        DatingMeetingResponse response = datingMeetingService.createDatingMeeting(request, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -77,7 +79,8 @@ public class DatingMeetingController {
     })
     public ResponseEntity<ParticipantResponse> joinEvent(
             @Parameter(description = "데이팅 미팅 ID") @PathVariable String datingMeetingId,
-            @Valid @RequestBody JoinEventRequest request) {
+            @Parameter(description = "인증된 사용자 ID", required = true) @RequestHeader("X-User-Id") UUID userId) {
+        JoinEventRequest request = new JoinEventRequest(userId);
         ParticipantResponse response = datingMeetingService.joinEvent(datingMeetingId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

@@ -43,25 +43,40 @@ public class DatingMeeting extends BaseEntity {
     @Column(name = "max_female_participants", nullable = false)
     private Integer maxFemaleParticipants;
 
+    @NotNull
+    @Column(name = "host_dating_user_id", nullable = false)
+    private Long hostDatingUserId;
+
     @Version
     private Long version;
 
     @OneToMany(mappedBy = "datingMeeting", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Participant> participants = new ArrayList<>();
 
-    private DatingMeeting(String title, String description, LocalDateTime meetingDateTime, String location,
-                          Integer maxMaleParticipants, Integer maxFemaleParticipants) {
+    private DatingMeeting(String title,
+                          String description,
+                          Long hostDatingUserId,
+                          LocalDateTime meetingDateTime,
+                          String location,
+                          Integer maxMaleParticipants,
+                          Integer maxFemaleParticipants) {
         this.title = title;
         this.description = description;
+        this.hostDatingUserId = hostDatingUserId;
         this.meetingDateTime = meetingDateTime;
         this.location = location;
         this.maxMaleParticipants = maxMaleParticipants;
         this.maxFemaleParticipants = maxFemaleParticipants;
     }
 
-    public static DatingMeeting create(String title, String description, LocalDateTime meetingDateTime, String location,
-                                       Integer maxMaleParticipants, Integer maxFemaleParticipants) {
-        return new DatingMeeting(title, description, meetingDateTime, location, maxMaleParticipants, maxFemaleParticipants);
+    public static DatingMeeting create(String title,
+                                       String description,
+                                       Long hostDatingUserId,
+                                       LocalDateTime meetingDateTime,
+                                       String location,
+                                       Integer maxMaleParticipants,
+                                       Integer maxFemaleParticipants) {
+        return new DatingMeeting(title, description, hostDatingUserId, meetingDateTime, location, maxMaleParticipants, maxFemaleParticipants);
     }
 
     public void update(String title, String description, LocalDateTime meetingDateTime, String location,
@@ -96,6 +111,16 @@ public class DatingMeeting extends BaseEntity {
 
     public boolean isFemaleFull() {
         return getFemaleParticipantsCount() >= this.maxFemaleParticipants;
+    }
+
+    /**
+     * 특정 성별의 정원이 찼는지 확인
+     */
+    public boolean isGenderFull(DatingUser datingUser) {
+        if (datingUser.isMale()) {
+            return isMaleFull();
+        }
+        return isFemaleFull();
     }
 
     public int getMaleParticipantsCount() {
