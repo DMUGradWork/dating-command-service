@@ -38,7 +38,8 @@ public class DatingMeetingServiceImpl implements DatingMeetingService {
                 request.description(),
                 request.meetingDateTime(),
                 request.location(),
-                request.maxParticipants()
+                request.maxMaleParticipants(),
+                request.maxFemaleParticipants()
         );
 
         DatingMeeting savedDatingMeeting = datingMeetingRepository.save(datingMeeting);
@@ -62,7 +63,8 @@ public class DatingMeetingServiceImpl implements DatingMeetingService {
                 request.description(),
                 request.meetingDateTime(),
                 request.location(),
-                request.maxParticipants()
+                request.maxMaleParticipants(),
+                request.maxFemaleParticipants()
         );
 
         DatingMeeting updatedDatingMeeting = datingMeetingRepository.save(datingMeeting);

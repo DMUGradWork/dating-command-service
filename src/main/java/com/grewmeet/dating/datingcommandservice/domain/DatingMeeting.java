@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -35,8 +36,12 @@ public class DatingMeeting extends BaseEntity {
     private String location;
 
     @Positive
-    @Column(nullable = false)
-    private Integer maxParticipants;
+    @Column(name = "max_male_participants", nullable = false)
+    private Integer maxMaleParticipants;
+
+    @Positive
+    @Column(name = "max_female_participants", nullable = false)
+    private Integer maxFemaleParticipants;
 
     @Version
     private Long version;
@@ -44,19 +49,23 @@ public class DatingMeeting extends BaseEntity {
     @OneToMany(mappedBy = "datingMeeting", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Participant> participants = new ArrayList<>();
 
-    private DatingMeeting(String title, String description, LocalDateTime meetingDateTime, String location, Integer maxParticipants) {
+    private DatingMeeting(String title, String description, LocalDateTime meetingDateTime, String location,
+                          Integer maxMaleParticipants, Integer maxFemaleParticipants) {
         this.title = title;
         this.description = description;
         this.meetingDateTime = meetingDateTime;
         this.location = location;
-        this.maxParticipants = maxParticipants;
+        this.maxMaleParticipants = maxMaleParticipants;
+        this.maxFemaleParticipants = maxFemaleParticipants;
     }
 
-    public static DatingMeeting create(String title, String description, LocalDateTime meetingDateTime, String location, Integer maxParticipants) {
-        return new DatingMeeting(title, description, meetingDateTime, location, maxParticipants);
+    public static DatingMeeting create(String title, String description, LocalDateTime meetingDateTime, String location,
+                                       Integer maxMaleParticipants, Integer maxFemaleParticipants) {
+        return new DatingMeeting(title, description, meetingDateTime, location, maxMaleParticipants, maxFemaleParticipants);
     }
 
-    public void update(String title, String description, LocalDateTime meetingDateTime, String location, Integer maxParticipants) {
+    public void update(String title, String description, LocalDateTime meetingDateTime, String location,
+                       Integer maxMaleParticipants, Integer maxFemaleParticipants) {
         if (title != null) {
             this.title = title;
         }
@@ -69,18 +78,48 @@ public class DatingMeeting extends BaseEntity {
         if (location != null) {
             this.location = location;
         }
-        if (maxParticipants != null) {
-            this.maxParticipants = maxParticipants;
+        if (maxMaleParticipants != null) {
+            this.maxMaleParticipants = maxMaleParticipants;
+        }
+        if (maxFemaleParticipants != null) {
+            this.maxFemaleParticipants = maxFemaleParticipants;
         }
     }
 
     public boolean isParticipantsFull() {
-        return this.participants.size() >= this.maxParticipants;
+        return isMaleFull() && isFemaleFull();
     }
 
-    public boolean hasParticipant(Long userId) {
+    public boolean isMaleFull() {
+        return getMaleParticipantsCount() >= this.maxMaleParticipants;
+    }
+
+    public boolean isFemaleFull() {
+        return getFemaleParticipantsCount() >= this.maxFemaleParticipants;
+    }
+
+    public int getMaleParticipantsCount() {
+        return (int) this.participants.stream()
+                .filter(Participant::isActive)
+                .filter(Participant::isMale)
+                .count();
+    }
+
+    public int getFemaleParticipantsCount() {
+        return (int) this.participants.stream()
+                .filter(Participant::isActive)
+                .filter(Participant::isFemale)
+                .count();
+    }
+
+    public boolean hasParticipant(UUID authUserId) {
         return this.participants.stream()
-                .anyMatch(participant -> participant.getUserId().equals(userId) && participant.isActive());
+                .anyMatch(participant -> participant.getAuthUserId().equals(authUserId) && participant.isActive());
+    }
+
+    public boolean hasParticipant(Long datingUserId) {
+        return this.participants.stream()
+                .anyMatch(participant -> participant.getDatingUserId().equals(datingUserId) && participant.isActive());
     }
 
     public int getCurrentParticipantCount() {

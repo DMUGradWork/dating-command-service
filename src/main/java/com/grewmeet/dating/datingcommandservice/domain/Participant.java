@@ -6,6 +6,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 
 @Entity
 @Table(name = "participants")
@@ -14,8 +16,9 @@ import lombok.NoArgsConstructor;
 public class Participant extends BaseEntity {
 
     @NotNull
-    @Column(nullable = false)
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "dating_user_id", nullable = false)
+    private DatingUser datingUser;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
@@ -23,17 +26,17 @@ public class Participant extends BaseEntity {
     private DatingMeeting datingMeeting;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private ParticipantStatus status = ParticipantStatus.ACTIVE;
 
-    private Participant(Long userId, DatingMeeting datingMeeting) {
-        this.userId = userId;
+    private Participant(DatingUser datingUser, DatingMeeting datingMeeting) {
+        this.datingUser = datingUser;
         this.datingMeeting = datingMeeting;
         this.status = ParticipantStatus.ACTIVE;
     }
 
-    public static Participant create(Long userId, DatingMeeting datingMeeting) {
-        return new Participant(userId, datingMeeting);
+    public static Participant create(DatingUser datingUser, DatingMeeting datingMeeting) {
+        return new Participant(datingUser, datingMeeting);
     }
 
     public void withdraw() {
@@ -42,6 +45,22 @@ public class Participant extends BaseEntity {
 
     public boolean isActive() {
         return this.status == ParticipantStatus.ACTIVE;
+    }
+
+    public boolean isMale() {
+        return datingUser.isMale();
+    }
+
+    public boolean isFemale() {
+        return datingUser.isFemale();
+    }
+
+    public UUID getAuthUserId() {
+        return datingUser.getAuthUserId();
+    }
+
+    public Long getDatingUserId() {
+        return datingUser.getId();
     }
 
     public enum ParticipantStatus {
