@@ -27,8 +27,9 @@ public class Outbox extends BaseEntity {
     @Column(nullable = false, length = 100)
     private String aggregateType;
 
-    @Column(nullable = false)
-    private Long aggregateId;
+    @NotBlank
+    @Column(nullable = false, length = 36)
+    private String aggregateId;
 
     @NotBlank
     @Column(nullable = false, columnDefinition = "TEXT")
@@ -42,7 +43,7 @@ public class Outbox extends BaseEntity {
 
     private String errorMessage;
 
-    private Outbox(String eventType, String aggregateType, Long aggregateId, String payload) {
+    private Outbox(String eventType, String aggregateType, String aggregateId, String payload) {
         this.eventType = eventType;
         this.aggregateType = aggregateType;
         this.aggregateId = aggregateId;
@@ -50,7 +51,7 @@ public class Outbox extends BaseEntity {
         this.status = OutboxStatus.PENDING;
     }
 
-    public static Outbox create(String eventType, String aggregateType, Long aggregateId, String payload) {
+    public static Outbox create(String eventType, String aggregateType, String aggregateId, String payload) {
         return new Outbox(eventType, aggregateType, aggregateId, payload);
     }
 

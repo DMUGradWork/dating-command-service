@@ -2,24 +2,27 @@ package com.grewmeet.dating.datingcommandservice.saga;
 
 import com.grewmeet.dating.datingcommandservice.domain.DatingMeeting;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public record DatingMeetingUpdated(
-        Long datingMeetingId,
+        UUID meetingUuid,
         String title,
         String description,
         LocalDateTime meetingDateTime,
         String location,
-        Integer maxParticipants,
+        Integer maxMaleParticipants,
+        Integer maxFemaleParticipants,
         LocalDateTime updatedAt
 ) {
     public static DatingMeetingUpdated from(DatingMeeting datingMeeting) {
         return new DatingMeetingUpdated(
-                datingMeeting.getId(),
+                datingMeeting.getMeetingUuid(),
                 datingMeeting.getTitle(),
                 datingMeeting.getDescription(),
                 datingMeeting.getMeetingDateTime(),
                 datingMeeting.getLocation(),
-                datingMeeting.getMaxParticipants(),
+                datingMeeting.getMaxMaleParticipants(),
+                datingMeeting.getMaxFemaleParticipants(),
                 datingMeeting.getUpdatedAt()
         );
     }

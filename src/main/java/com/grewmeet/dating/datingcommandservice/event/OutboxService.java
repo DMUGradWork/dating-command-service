@@ -17,16 +17,16 @@ public class OutboxService {
     private final ObjectMapper objectMapper;
 
     @Transactional
-    public void publishEvent(String eventType, String aggregateType, Long aggregateId, Object eventData) {
+    public void publishEvent(String eventType, String aggregateType, String aggregateId, Object eventData) {
         try {
             String payload = objectMapper.writeValueAsString(eventData);
             Outbox outboxEvent = Outbox.create(eventType, aggregateType, aggregateId, payload);
             outboxRepository.save(outboxEvent);
-            
-            log.info("Outbox event saved: eventType={}, aggregateType={}, aggregateId={}", 
+
+            log.info("Outbox event saved: eventType={}, aggregateType={}, aggregateId={}",
                     eventType, aggregateType, aggregateId);
         } catch (Exception e) {
-            log.error("Failed to publish outbox event: eventType={}, aggregateType={}, aggregateId={}", 
+            log.error("Failed to publish outbox event: eventType={}, aggregateType={}, aggregateId={}",
                     eventType, aggregateType, aggregateId, e);
             throw new RuntimeException("Failed to publish outbox event", e);
         }

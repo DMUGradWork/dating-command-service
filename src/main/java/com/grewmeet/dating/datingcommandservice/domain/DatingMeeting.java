@@ -20,6 +20,10 @@ import java.util.List;
 public class DatingMeeting extends BaseEntity {
 
     @NotBlank
+    @Column(nullable = false, unique = true, updatable = false, length = 36)
+    private UUID meetingUuid = UUID.randomUUID();
+
+    @NotBlank
     @Column(nullable = false, length = 200)
     private String title;
 

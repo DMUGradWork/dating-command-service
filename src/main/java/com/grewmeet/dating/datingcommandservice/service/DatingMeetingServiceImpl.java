@@ -37,23 +37,32 @@ public class DatingMeetingServiceImpl implements DatingMeetingService {
 
     @Override
     public DatingMeetingResponse createDatingMeeting(CreateDatingMeetingRequest request, UUID hostId) {
+        DatingUser host = getDatingUserByAuthId(hostId);
+        if(!host.isHost()) {
+            throw new IllegalStateException("Dating user {"+ hostId + "} can't make dating event : not host.");
+        }
+
         DatingMeeting datingMeeting = DatingMeeting.create(
                 request.title(),
                 request.description(),
-                getDatingHostId(hostId),
+                host.getId(),
                 request.meetingDateTime(),
                 request.location(),
                 request.maxMaleParticipants(),
                 request.maxFemaleParticipants()
         );
         DatingMeeting savedDatingMeeting = datingMeetingRepository.save(datingMeeting);
-        
-        DatingMeetingCreated datingMeetingCreated = DatingMeetingCreated.from(savedDatingMeeting);
-        
-        outboxService.publishEvent("DatingMeetingCreated", "DatingMeeting", savedDatingMeeting.getId(), datingMeetingCreated);
-        
+
+        DatingMeetingCreated datingMeetingCreated = DatingMeetingCreated.from(
+                savedDatingMeeting,
+                host.getAuthUserId(),
+                host.getNickname()
+        );
+
+        outboxService.publishEvent("DatingMeetingCreated", "DatingMeeting", savedDatingMeeting.getMeetingUuid(), datingMeetingCreated);
+
         log.info("Dating meeting created: id={}, title={}", savedDatingMeeting.getId(), savedDatingMeeting.getTitle());
-        
+
         return DatingMeetingResponse.from(savedDatingMeeting);
     }
 
@@ -72,10 +81,9 @@ public class DatingMeetingServiceImpl implements DatingMeetingService {
         );
 
         DatingMeeting updatedDatingMeeting = datingMeetingRepository.save(datingMeeting);
-
         DatingMeetingUpdated datingMeetingUpdated = DatingMeetingUpdated.from(updatedDatingMeeting);
 
-        outboxService.publishEvent("DatingMeetingUpdated", "DatingMeeting", updatedDatingMeeting.getId(), datingMeetingUpdated);
+        outboxService.publishEvent("DatingMeetingUpdated", "DatingMeeting", updatedDatingMeeting.getMeetingUuid(), datingMeetingUpdated);
 
         log.info("Dating meeting updated: id={}, title={}", updatedDatingMeeting.getId(), updatedDatingMeeting.getTitle());
 
@@ -94,12 +102,12 @@ public class DatingMeetingServiceImpl implements DatingMeetingService {
 
         DatingMeetingDeleted datingMeetingDeleted = DatingMeetingDeleted.from(datingMeeting);
 
-        outboxService.publishEvent("DatingMeetingDeleted", "DatingMeeting", id, datingMeetingDeleted);
+        outboxService.publishEvent("DatingMeetingDeleted", "DatingMeeting", datingMeeting.getMeetingUuid(), datingMeetingDeleted);
 
         datingMeetingRepository.delete(datingMeeting);
 
         log.info("Dating meeting deleted: id={}, title={}, participantCount={}",
-                id, datingMeetingDeleted.title(), datingMeetingDeleted.participantIds().size());
+                id, datingMeeting.getTitle(), datingMeeting.getParticipants().size());
     }
 
     @Override
@@ -135,13 +143,15 @@ public class DatingMeetingServiceImpl implements DatingMeetingService {
 
         // 이벤트 발행
         DatingMeetingParticipantJoinedEvent joinedEvent = new DatingMeetingParticipantJoinedEvent(
-                datingMeeting.getId(),
-                savedParticipant.getId(),
-                savedParticipant.getDatingUserId(),
+                datingMeeting.getMeetingUuid(),
+                datingUser.getAuthUserId(),
+                datingUser.getGender().name(),
+                datingMeeting.getTitle(),
+                datingMeeting.getMeetingDateTime(),
                 savedParticipant.getCreatedAt()
         );
 
-        outboxService.publishEvent("DatingMeetingParticipantJoined", "DatingMeetingParticipant", savedParticipant.getId(), joinedEvent);
+        outboxService.publishEvent("DatingMeetingParticipantJoined", "DatingMeetingParticipant", datingMeeting.getMeetingUuid(), joinedEvent);
 
         log.info("User joined event: authUserId={}, datingUserId={}, datingMeetingId={}, participantId={}",
                 request.userId(), datingUser.getId(), datingMeetingId, savedParticipant.getId());
@@ -172,13 +182,13 @@ public class DatingMeetingServiceImpl implements DatingMeetingService {
 
         // 이벤트 발행
         DatingMeetingParticipantLeftEvent leftEvent = new DatingMeetingParticipantLeftEvent(
-                datingMeeting.getId(),
-                participant.getId(),
-                participant.getDatingUserId(),
+                datingMeeting.getMeetingUuid(),
+                participant.getAuthUserId(),
+                participant.getDatingUser().getGender().name(),
                 java.time.LocalDateTime.now()
         );
 
-        outboxService.publishEvent("DatingMeetingParticipantLeft", "DatingMeetingParticipant", participant.getId(), leftEvent);
+        outboxService.publishEvent("DatingMeetingParticipantLeft", "DatingMeetingParticipant", datingMeeting.getMeetingUuid(), leftEvent);
 
         log.info("User left event: userId={}, datingMeetingId={}, participantId={}",
                 participant.getDatingUserId(), datingMeetingId, participantId);
@@ -188,14 +198,6 @@ public class DatingMeetingServiceImpl implements DatingMeetingService {
         DatingMeeting datingMeeting = datingMeetingRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Dating meeting not found: " + datingMeetingId));
         return datingMeeting;
-    }
-
-    private Long getDatingHostId(UUID id) {
-        DatingUser datingUser = getDatingUserByAuthId(id);
-        if(!datingUser.isHost()) {
-            throw new IllegalStateException("Dating user {"+ id + "} can't make dating event : not host.");
-        }
-        return datingUser.getId();
     }
 
     private DatingUser getDatingUserByAuthId(UUID id) {
