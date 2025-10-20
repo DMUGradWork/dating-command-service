@@ -1,12 +1,14 @@
 package com.grewmeet.dating.datingcommandservice.service;
 
 import com.grewmeet.dating.datingcommandservice.domain.DatingMeeting;
+import com.grewmeet.dating.datingcommandservice.domain.DatingUser;
 import com.grewmeet.dating.datingcommandservice.domain.Participant;
+import com.grewmeet.dating.datingcommandservice.repository.DatingUserRepository;
 import com.grewmeet.dating.datingcommandservice.saga.DatingMeetingCreated;
 import com.grewmeet.dating.datingcommandservice.saga.DatingMeetingDeleted;
 import com.grewmeet.dating.datingcommandservice.saga.DatingMeetingUpdated;
-import com.grewmeet.dating.datingcommandservice.saga.ParticipantJoinedEvent;
-import com.grewmeet.dating.datingcommandservice.saga.ParticipantLeftEvent;
+import com.grewmeet.dating.datingcommandservice.saga.DatingMeetingParticipantJoinedEvent;
+import com.grewmeet.dating.datingcommandservice.saga.DatingMeetingParticipantLeftEvent;
 import com.grewmeet.dating.datingcommandservice.dto.request.CreateDatingMeetingRequest;
 import com.grewmeet.dating.datingcommandservice.dto.request.JoinEventRequest;
 import com.grewmeet.dating.datingcommandservice.dto.request.UpdateDatingMeetingRequest;
@@ -16,6 +18,7 @@ import com.grewmeet.dating.datingcommandservice.event.OutboxService;
 import com.grewmeet.dating.datingcommandservice.repository.DatingMeetingRepository;
 import com.grewmeet.dating.datingcommandservice.repository.ParticipantRepository;
 import com.grewmeet.dating.datingcommandservice.util.IdParser;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,47 +32,58 @@ public class DatingMeetingServiceImpl implements DatingMeetingService {
 
     private final DatingMeetingRepository datingMeetingRepository;
     private final ParticipantRepository participantRepository;
+    private final DatingUserRepository datingUserRepository;
     private final OutboxService outboxService;
 
     @Override
-    public DatingMeetingResponse createDatingMeeting(CreateDatingMeetingRequest request) {
+    public DatingMeetingResponse createDatingMeeting(CreateDatingMeetingRequest request, UUID hostId) {
+        DatingUser host = getDatingUserByAuthId(hostId);
+        if(!host.isHost()) {
+            throw new IllegalStateException("Dating user {"+ hostId + "} can't make dating event : not host.");
+        }
+
         DatingMeeting datingMeeting = DatingMeeting.create(
                 request.title(),
                 request.description(),
+                host.getId(),
                 request.meetingDateTime(),
                 request.location(),
-                request.maxParticipants()
+                request.maxMaleParticipants(),
+                request.maxFemaleParticipants()
+        );
+        DatingMeeting savedDatingMeeting = datingMeetingRepository.save(datingMeeting);
+
+        DatingMeetingCreated datingMeetingCreated = DatingMeetingCreated.from(
+                savedDatingMeeting,
+                host.getAuthUserId(),
+                host.getNickname()
         );
 
-        DatingMeeting savedDatingMeeting = datingMeetingRepository.save(datingMeeting);
-        
-        DatingMeetingCreated datingMeetingCreated = DatingMeetingCreated.from(savedDatingMeeting);
-        
-        outboxService.publishEvent("DatingMeetingCreated", "DatingMeeting", savedDatingMeeting.getId(), datingMeetingCreated);
-        
+        outboxService.publishEvent("DatingMeetingCreated", "DatingMeeting", savedDatingMeeting.getMeetingUuid(), datingMeetingCreated);
+
         log.info("Dating meeting created: id={}, title={}", savedDatingMeeting.getId(), savedDatingMeeting.getTitle());
-        
+
         return DatingMeetingResponse.from(savedDatingMeeting);
     }
 
     @Override
-    public DatingMeetingResponse updateDatingMeeting(String eventId, UpdateDatingMeetingRequest request) {
-        Long id = IdParser.parseEventId(eventId);
-        DatingMeeting datingMeeting = getDatingMeeting(eventId, id);
+    public DatingMeetingResponse updateDatingMeeting(String datingMeetingId, UpdateDatingMeetingRequest request) {
+        Long id = IdParser.parseDatingMeetingId(datingMeetingId);
+        DatingMeeting datingMeeting = getDatingMeeting(datingMeetingId, id);
 
         datingMeeting.update(
                 request.title(),
                 request.description(),
                 request.meetingDateTime(),
                 request.location(),
-                request.maxParticipants()
+                request.maxMaleParticipants(),
+                request.maxFemaleParticipants()
         );
 
         DatingMeeting updatedDatingMeeting = datingMeetingRepository.save(datingMeeting);
-
         DatingMeetingUpdated datingMeetingUpdated = DatingMeetingUpdated.from(updatedDatingMeeting);
 
-        outboxService.publishEvent("DatingMeetingUpdated", "DatingMeeting", updatedDatingMeeting.getId(), datingMeetingUpdated);
+        outboxService.publishEvent("DatingMeetingUpdated", "DatingMeeting", updatedDatingMeeting.getMeetingUuid(), datingMeetingUpdated);
 
         log.info("Dating meeting updated: id={}, title={}", updatedDatingMeeting.getId(), updatedDatingMeeting.getTitle());
 
@@ -77,9 +91,9 @@ public class DatingMeetingServiceImpl implements DatingMeetingService {
     }
 
     @Override
-    public void deleteDatingMeeting(String eventId) {
-        Long id = IdParser.parseEventId(eventId);
-        DatingMeeting datingMeeting = getDatingMeeting(eventId, id);
+    public void deleteDatingMeeting(String datingMeetingId) {
+        Long id = IdParser.parseDatingMeetingId(datingMeetingId);
+        DatingMeeting datingMeeting = getDatingMeeting(datingMeetingId, id);
 
         if (!datingMeeting.getParticipants().isEmpty()) {
             log.warn("Attempting to delete dating meeting with participants: id={}, participantCount={}",
@@ -88,86 +102,113 @@ public class DatingMeetingServiceImpl implements DatingMeetingService {
 
         DatingMeetingDeleted datingMeetingDeleted = DatingMeetingDeleted.from(datingMeeting);
 
-        outboxService.publishEvent("DatingMeetingDeleted", "DatingMeeting", id, datingMeetingDeleted);
+        outboxService.publishEvent("DatingMeetingDeleted", "DatingMeeting", datingMeeting.getMeetingUuid(), datingMeetingDeleted);
 
         datingMeetingRepository.delete(datingMeeting);
 
         log.info("Dating meeting deleted: id={}, title={}, participantCount={}",
-                id, datingMeetingDeleted.title(), datingMeetingDeleted.participantIds().size());
+                id, datingMeeting.getTitle(), datingMeeting.getParticipants().size());
     }
 
     @Override
-    public ParticipantResponse joinEvent(String eventId, JoinEventRequest request) {
-        Long id = IdParser.parseEventId(eventId);
-        DatingMeeting datingMeeting = getDatingMeeting(eventId, id);
-        
+    public ParticipantResponse joinEvent(String datingMeetingId, JoinEventRequest request) {
+        Long id = IdParser.parseDatingMeetingId(datingMeetingId);
+        DatingMeeting datingMeeting = getDatingMeeting(datingMeetingId, id);
+
+        // DatingUser 조회 (현재 분기)
+        String currentQuarter = getCurrentQuarter();
+        DatingUser datingUser = datingUserRepository.findByAuthUserIdAndQuarter(request.userId(), currentQuarter)
+                .orElseThrow(() -> new IllegalArgumentException("DatingUser not found for this quarter: " + request.userId()));
+
         // 비즈니스 룰 검증
-        if (datingMeeting.hasParticipant(request.userId())) {
+        if (!datingUser.canParticipate()) {
+            throw new IllegalStateException("User cannot participate in events: " + request.userId());
+        }
+
+        if (datingMeeting.hasParticipant(datingUser.getId())) {
             throw new IllegalStateException("User is already participating in this event: " + request.userId());
         }
-        
-        if (datingMeeting.isParticipantsFull()) {
-            throw new IllegalStateException("Event is full. Cannot join: " + eventId);
+
+        if (datingMeeting.isGenderFull(datingUser)) {
+            throw new IllegalStateException("Gender quota is full. Cannot join: " + datingMeetingId);
         }
-        
+
         // 참여자 생성 및 저장
-        Participant participant = Participant.create(request.userId(), datingMeeting);
+        Participant participant = Participant.create(datingUser, datingMeeting);
         Participant savedParticipant = participantRepository.save(participant);
-        
+
+        // 참여 횟수 증가
+        datingUser.incrementParticipation();
+        datingUserRepository.save(datingUser);
+
         // 이벤트 발행
-        ParticipantJoinedEvent joinedEvent = new ParticipantJoinedEvent(
-                datingMeeting.getId(),
-                savedParticipant.getId(),
-                savedParticipant.getUserId(),
+        DatingMeetingParticipantJoinedEvent joinedEvent = new DatingMeetingParticipantJoinedEvent(
+                datingMeeting.getMeetingUuid(),
+                datingUser.getAuthUserId(),
+                datingUser.getGender().name(),
+                datingMeeting.getTitle(),
+                datingMeeting.getMeetingDateTime(),
                 savedParticipant.getCreatedAt()
         );
-        
-        outboxService.publishEvent("ParticipantJoined", "Participant", savedParticipant.getId(), joinedEvent);
-        
-        log.info("User joined event: userId={}, eventId={}, participantId={}", 
-                request.userId(), eventId, savedParticipant.getId());
-        
+
+        outboxService.publishEvent("DatingMeetingParticipantJoined", "DatingMeetingParticipant", datingMeeting.getMeetingUuid(), joinedEvent);
+
+        log.info("User joined event: authUserId={}, datingUserId={}, datingMeetingId={}, participantId={}",
+                request.userId(), datingUser.getId(), datingMeetingId, savedParticipant.getId());
+
         return new ParticipantResponse(
                 savedParticipant.getId(),
-                savedParticipant.getUserId(),
+                savedParticipant.getDatingUserId(),
                 savedParticipant.getStatus(),
                 savedParticipant.getCreatedAt()
         );
     }
-    
+
     @Override
-    public void leaveEvent(String eventId, Long participantId) {
-        Long eventIdLong = IdParser.parseEventId(eventId);
-        DatingMeeting datingMeeting = getDatingMeeting(eventId, eventIdLong);
-        
-        Participant participant = participantRepository.findByIdAndDatingMeetingId(participantId, eventIdLong)
+    public void leaveEvent(String datingMeetingId, Long participantId) {
+        Long datingMeetingIdLong = IdParser.parseDatingMeetingId(datingMeetingId);
+        DatingMeeting datingMeeting = getDatingMeeting(datingMeetingId, datingMeetingIdLong);
+
+        Participant participant = participantRepository.findByIdAndDatingMeetingId(participantId, datingMeetingIdLong)
                 .orElseThrow(() -> new IllegalArgumentException("Participant not found: " + participantId));
-        
+
         if (!participant.isActive()) {
             throw new IllegalStateException("Participant is already withdrawn: " + participantId);
         }
-        
+
         // 참여자 탈퇴 처리
         participant.withdraw();
         participantRepository.save(participant);
-        
+
         // 이벤트 발행
-        ParticipantLeftEvent leftEvent = new ParticipantLeftEvent(
-                datingMeeting.getId(),
-                participant.getId(),
-                participant.getUserId(),
+        DatingMeetingParticipantLeftEvent leftEvent = new DatingMeetingParticipantLeftEvent(
+                datingMeeting.getMeetingUuid(),
+                participant.getAuthUserId(),
+                participant.getDatingUser().getGender().name(),
                 java.time.LocalDateTime.now()
         );
-        
-        outboxService.publishEvent("ParticipantLeft", "Participant", participant.getId(), leftEvent);
-        
-        log.info("User left event: userId={}, eventId={}, participantId={}", 
-                participant.getUserId(), eventId, participantId);
+
+        outboxService.publishEvent("DatingMeetingParticipantLeft", "DatingMeetingParticipant", datingMeeting.getMeetingUuid(), leftEvent);
+
+        log.info("User left event: userId={}, datingMeetingId={}, participantId={}",
+                participant.getDatingUserId(), datingMeetingId, participantId);
     }
 
-    private DatingMeeting getDatingMeeting(String eventId, Long id) {
+    private DatingMeeting getDatingMeeting(String datingMeetingId, Long id) {
         DatingMeeting datingMeeting = datingMeetingRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Dating meeting not found: " + eventId));
+                .orElseThrow(() -> new IllegalArgumentException("Dating meeting not found: " + datingMeetingId));
         return datingMeeting;
+    }
+
+    private DatingUser getDatingUserByAuthId(UUID id) {
+        return datingUserRepository.findByAuthUserIdAndQuarter(id, getCurrentQuarter())
+                .orElseThrow(() -> new IllegalArgumentException("Dating User not found for this quarter: " + id));
+    }
+
+    private String getCurrentQuarter() {
+        java.time.LocalDate now = java.time.LocalDate.now();
+        int year = now.getYear();
+        int quarter = (now.getMonthValue() - 1) / 3 + 1;
+        return year + "-Q" + quarter;
     }
 }

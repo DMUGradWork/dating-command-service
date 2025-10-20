@@ -17,7 +17,11 @@ public record UpdateDatingMeetingRequest(
         @Size(max = 300, message = "장소는 300자를 초과할 수 없습니다")
         String location,
 
-        @Min(value = 2, message = "최대 참여자 수는 최소 2명 이상이어야 합니다")
-        @Max(value = 100, message = "최대 참여자 수는 100명을 초과할 수 없습니다")
-        Integer maxParticipants
+        @Min(value = 1, message = "최대 남성 참여자 수는 최소 1명 이상이어야 합니다")
+        @Max(value = 50, message = "최대 남성 참여자 수는 50명을 초과할 수 없습니다")
+        Integer maxMaleParticipants,
+
+        @Min(value = 1, message = "최대 여성 참여자 수는 최소 1명 이상이어야 합니다")
+        @Max(value = 50, message = "최대 여성 참여자 수는 50명을 초과할 수 없습니다")
+        Integer maxFemaleParticipants
 ) {}

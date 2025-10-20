@@ -1,16 +1,18 @@
 package com.grewmeet.dating.datingcommandservice.util;
 
+import java.util.UUID;
+
 public class IdParser {
 
-    public static Long parseEventId(String eventId) {
-        if (eventId == null || eventId.trim().isEmpty()) {
-            throw new IllegalArgumentException("Event ID cannot be null or empty");
+    public static Long parseDatingMeetingId(String datingMeetingId) {
+        if (datingMeetingId == null || datingMeetingId.trim().isEmpty()) {
+            throw new IllegalArgumentException("Dating meeting ID cannot be null or empty");
         }
         
         try {
-            return Long.parseLong(eventId.trim());
+            return Long.parseLong(datingMeetingId);
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid event ID format: " + eventId, e);
+            throw new IllegalArgumentException("Invalid dating meeting ID format: " + datingMeetingId, e);
         }
     }
 }

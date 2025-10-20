@@ -3,32 +3,32 @@ package com.grewmeet.dating.datingcommandservice.saga;
 import com.grewmeet.dating.datingcommandservice.domain.DatingMeeting;
 import com.grewmeet.dating.datingcommandservice.domain.Participant;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.UUID;
 
 public record DatingMeetingDeleted(
-        Long datingMeetingId,
-        String title,
-        String description,
-        LocalDateTime meetingDateTime,
-        String location,
-        Integer maxParticipants,
-        List<Long> participantIds,
+        UUID datingMeetingId,
         LocalDateTime deletedAt
 ) {
+//    public static DatingMeetingDeleted from(DatingMeeting datingMeeting) {
+//        List<UUID> participantIds = datingMeeting.getParticipants().stream()
+//                .filter(Participant::isActive)
+//                .map(Participant::getAuthUserId)
+//                .toList();
+//
+//        return new DatingMeetingDeleted(
+//                datingMeeting.getId(),
+//                datingMeeting.getTitle(),
+//                datingMeeting.getDescription(),
+//                datingMeeting.getMeetingDateTime(),
+//                datingMeeting.getLocation(),
+//                datingMeeting.getMaxParticipants(),
+//                participantIds,
+//                LocalDateTime.now()
+//        );
+//    }
     public static DatingMeetingDeleted from(DatingMeeting datingMeeting) {
-        List<Long> participantIds = datingMeeting.getParticipants().stream()
-                .filter(Participant::isActive)
-                .map(Participant::getUserId)
-                .toList();
-        
         return new DatingMeetingDeleted(
-                datingMeeting.getId(),
-                datingMeeting.getTitle(),
-                datingMeeting.getDescription(),
-                datingMeeting.getMeetingDateTime(),
-                datingMeeting.getLocation(),
-                datingMeeting.getMaxParticipants(),
-                participantIds,
+                datingMeeting.getMeetingUuid(),
                 LocalDateTime.now()
         );
     }

@@ -5,11 +5,12 @@ import com.grewmeet.dating.datingcommandservice.dto.request.JoinEventRequest;
 import com.grewmeet.dating.datingcommandservice.dto.request.UpdateDatingMeetingRequest;
 import com.grewmeet.dating.datingcommandservice.dto.response.DatingMeetingResponse;
 import com.grewmeet.dating.datingcommandservice.dto.response.ParticipantResponse;
+import java.util.UUID;
 
 public interface DatingMeetingService {
-    DatingMeetingResponse createDatingMeeting(CreateDatingMeetingRequest request);
-    DatingMeetingResponse updateDatingMeeting(String eventId, UpdateDatingMeetingRequest request);
-    void deleteDatingMeeting(String eventId);
-    ParticipantResponse joinEvent(String eventId, JoinEventRequest request);
-    void leaveEvent(String eventId, Long participantId);
+    DatingMeetingResponse createDatingMeeting(CreateDatingMeetingRequest request, UUID hostId);
+    DatingMeetingResponse updateDatingMeeting(String datingMeetingId, UpdateDatingMeetingRequest request);
+    void deleteDatingMeeting(String datingMeetingId);
+    ParticipantResponse joinEvent(String datingMeetingId, JoinEventRequest request);
+    void leaveEvent(String datingMeetingId, Long participantId);
 }

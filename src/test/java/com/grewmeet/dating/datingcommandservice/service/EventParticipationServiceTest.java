@@ -69,7 +69,7 @@ class EventParticipationServiceTest {
         assertThat(response.status()).isEqualTo(Participant.ParticipantStatus.ACTIVE);
         
         verify(participantRepository).save(any(Participant.class));
-        verify(outboxService).publishEvent(eq("ParticipantJoined"), eq("Participant"), any(), any());
+        verify(outboxService).publishEvent(eq("DatingMeetingParticipantJoined"), eq("DatingMeetingParticipant"), any(), any());
     }
 
     @Test
@@ -146,7 +146,7 @@ class EventParticipationServiceTest {
         assertThat(participant.getStatus()).isEqualTo(Participant.ParticipantStatus.WITHDRAWN);
         
         verify(participantRepository).save(participant);
-        verify(outboxService).publishEvent(eq("ParticipantLeft"), eq("Participant"), any(), any());
+        verify(outboxService).publishEvent(eq("DatingMeetingParticipantLeft"), eq("DatingMeetingParticipant"), any(), any());
     }
 
     @Test
