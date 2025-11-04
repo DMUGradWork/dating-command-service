@@ -26,13 +26,8 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class DatingUser extends BaseEntity {
 
-    private static final int DEFAULT_MAX_PARTICIPATIONS = 5;
-    private static final int MAX_CONCURRENT_PARTICIPATIONS = 3;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "dating_user_id")
-    private Long id;
+    private static final int DEFAULT_MAX_PARTICIPATIONS = 7;  // 분기당 최대 7번 참여 가능
+    private static final int MAX_CONCURRENT_PARTICIPATIONS = 3;  // 동시 최대 3개 이벤트 참여 가능
 
     /**
      * Auth Service의 User UUID 참조

@@ -12,6 +12,8 @@ public record DatingMeetingUpdated(
         String location,
         Integer maxMaleParticipants,
         Integer maxFemaleParticipants,
+        Integer currentMaleParticipants,
+        Integer currentFemaleParticipants,
         LocalDateTime updatedAt
 ) {
     public static DatingMeetingUpdated from(DatingMeeting datingMeeting) {
@@ -23,6 +25,8 @@ public record DatingMeetingUpdated(
                 datingMeeting.getLocation(),
                 datingMeeting.getMaxMaleParticipants(),
                 datingMeeting.getMaxFemaleParticipants(),
+                datingMeeting.getMaleParticipantsCount(),
+                datingMeeting.getFemaleParticipantsCount(),
                 datingMeeting.getUpdatedAt()
         );
     }

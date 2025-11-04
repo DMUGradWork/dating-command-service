@@ -14,7 +14,7 @@ import com.grewmeet.dating.datingcommandservice.dto.request.JoinEventRequest;
 import com.grewmeet.dating.datingcommandservice.dto.request.UpdateDatingMeetingRequest;
 import com.grewmeet.dating.datingcommandservice.dto.response.DatingMeetingResponse;
 import com.grewmeet.dating.datingcommandservice.dto.response.ParticipantResponse;
-import com.grewmeet.dating.datingcommandservice.event.OutboxService;
+import com.grewmeet.dating.datingcommandservice.event.DatingEventPublisher;
 import com.grewmeet.dating.datingcommandservice.repository.DatingMeetingRepository;
 import com.grewmeet.dating.datingcommandservice.repository.ParticipantRepository;
 import com.grewmeet.dating.datingcommandservice.util.IdParser;
@@ -33,7 +33,7 @@ public class DatingMeetingServiceImpl implements DatingMeetingService {
     private final DatingMeetingRepository datingMeetingRepository;
     private final ParticipantRepository participantRepository;
     private final DatingUserRepository datingUserRepository;
-    private final OutboxService outboxService;
+    private final DatingEventPublisher eventPublisher;
 
     @Override
     public DatingMeetingResponse createDatingMeeting(CreateDatingMeetingRequest request, UUID hostId) {
@@ -59,7 +59,7 @@ public class DatingMeetingServiceImpl implements DatingMeetingService {
                 host.getNickname()
         );
 
-        outboxService.publishEvent("DatingMeetingCreated", "DatingMeeting", savedDatingMeeting.getMeetingUuid(), datingMeetingCreated);
+        eventPublisher.publishMeetingCreated(datingMeetingCreated, savedDatingMeeting.getMeetingUuid().toString());
 
         log.info("Dating meeting created: id={}, title={}", savedDatingMeeting.getId(), savedDatingMeeting.getTitle());
 
@@ -83,7 +83,7 @@ public class DatingMeetingServiceImpl implements DatingMeetingService {
         DatingMeeting updatedDatingMeeting = datingMeetingRepository.save(datingMeeting);
         DatingMeetingUpdated datingMeetingUpdated = DatingMeetingUpdated.from(updatedDatingMeeting);
 
-        outboxService.publishEvent("DatingMeetingUpdated", "DatingMeeting", updatedDatingMeeting.getMeetingUuid(), datingMeetingUpdated);
+        eventPublisher.publishMeetingUpdated(datingMeetingUpdated, updatedDatingMeeting.getMeetingUuid().toString());
 
         log.info("Dating meeting updated: id={}, title={}", updatedDatingMeeting.getId(), updatedDatingMeeting.getTitle());
 
@@ -102,7 +102,7 @@ public class DatingMeetingServiceImpl implements DatingMeetingService {
 
         DatingMeetingDeleted datingMeetingDeleted = DatingMeetingDeleted.from(datingMeeting);
 
-        outboxService.publishEvent("DatingMeetingDeleted", "DatingMeeting", datingMeeting.getMeetingUuid(), datingMeetingDeleted);
+        eventPublisher.publishMeetingDeleted(datingMeetingDeleted, datingMeeting.getMeetingUuid().toString());
 
         datingMeetingRepository.delete(datingMeeting);
 
@@ -151,7 +151,7 @@ public class DatingMeetingServiceImpl implements DatingMeetingService {
                 savedParticipant.getCreatedAt()
         );
 
-        outboxService.publishEvent("DatingMeetingParticipantJoined", "DatingMeetingParticipant", datingMeeting.getMeetingUuid(), joinedEvent);
+        eventPublisher.publishParticipantJoined(joinedEvent, datingMeeting.getMeetingUuid().toString());
 
         log.info("User joined event: authUserId={}, datingUserId={}, datingMeetingId={}, participantId={}",
                 request.userId(), datingUser.getId(), datingMeetingId, savedParticipant.getId());
@@ -188,7 +188,7 @@ public class DatingMeetingServiceImpl implements DatingMeetingService {
                 java.time.LocalDateTime.now()
         );
 
-        outboxService.publishEvent("DatingMeetingParticipantLeft", "DatingMeetingParticipant", datingMeeting.getMeetingUuid(), leftEvent);
+        eventPublisher.publishParticipantLeft(leftEvent, datingMeeting.getMeetingUuid().toString());
 
         log.info("User left event: userId={}, datingMeetingId={}, participantId={}",
                 participant.getDatingUserId(), datingMeetingId, participantId);

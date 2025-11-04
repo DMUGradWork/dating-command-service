@@ -39,7 +39,7 @@ class EventParticipationControllerTest {
     @DisplayName("이벤트 참여 API - 성공")
     void joinEvent_Success() throws Exception {
         // given
-        JoinEventRequest request = new JoinEventRequest(1L);
+        JoinEventRequest request = new JoinEventRequest(java.util.UUID.randomUUID());
         ParticipantResponse response = new ParticipantResponse(
                 1L, 1L, Participant.ParticipantStatus.ACTIVE, LocalDateTime.now()
         );
@@ -79,7 +79,7 @@ class EventParticipationControllerTest {
     @DisplayName("이벤트 참여 API - 이미 참여한 경우")
     void joinEvent_AlreadyParticipating() throws Exception {
         // given
-        JoinEventRequest request = new JoinEventRequest(1L);
+        JoinEventRequest request = new JoinEventRequest(java.util.UUID.randomUUID());
         
         given(datingMeetingService.joinEvent(eq("1"), any(JoinEventRequest.class)))
                 .willThrow(new IllegalStateException("User is already participating"));

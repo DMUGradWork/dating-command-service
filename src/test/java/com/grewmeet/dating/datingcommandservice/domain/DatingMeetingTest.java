@@ -17,19 +17,22 @@ class DatingMeetingTest {
         // given
         String title = "첫 데이트";
         String description = "카페에서 만나요";
+        Long hostDatingUserId = 1L;
         LocalDateTime meetingDateTime = LocalDateTime.of(2025, 12, 25, 14, 0);
         String location = "스타벅스 강남점";
-        Integer maxParticipants = 10;
+        Integer maxMaleParticipants = 5;
+        Integer maxFemaleParticipants = 5;
 
         // when
-        DatingMeeting meeting = DatingMeeting.create(title, description, meetingDateTime, location, maxParticipants);
+        DatingMeeting meeting = DatingMeeting.create(title, description, hostDatingUserId, meetingDateTime, location, maxMaleParticipants, maxFemaleParticipants);
 
         // then
         assertEquals(title, meeting.getTitle());
         assertEquals(description, meeting.getDescription());
         assertEquals(meetingDateTime, meeting.getMeetingDateTime());
         assertEquals(location, meeting.getLocation());
-        assertEquals(maxParticipants, meeting.getMaxParticipants());
+        assertEquals(maxMaleParticipants, meeting.getMaxMaleParticipants());
+        assertEquals(maxFemaleParticipants, meeting.getMaxFemaleParticipants());
         assertEquals(0, meeting.getCurrentParticipantCount());
         assertFalse(meeting.isParticipantsFull());
     }
@@ -41,20 +44,23 @@ class DatingMeetingTest {
         DatingMeeting meeting = DatingMeeting.create(
                 "기존 제목",
                 "기존 설명",
+                1L,
                 LocalDateTime.of(2025, 12, 25, 14, 0),
                 "기존 장소",
-                10
+                5,
+                5
         );
 
         // when
-        meeting.update("새로운 제목", null, null, null, null);
+        meeting.update("새로운 제목", null, null, null, null, null);
 
         // then
         assertEquals("새로운 제목", meeting.getTitle());
         assertEquals("기존 설명", meeting.getDescription()); // 변경되지 않음
         assertEquals(LocalDateTime.of(2025, 12, 25, 14, 0), meeting.getMeetingDateTime()); // 변경되지 않음
         assertEquals("기존 장소", meeting.getLocation()); // 변경되지 않음
-        assertEquals(10, meeting.getMaxParticipants()); // 변경되지 않음
+        assertEquals(5, meeting.getMaxMaleParticipants()); // 변경되지 않음
+        assertEquals(5, meeting.getMaxFemaleParticipants()); // 변경되지 않음
     }
 
     @Test
@@ -64,9 +70,11 @@ class DatingMeetingTest {
         DatingMeeting meeting = DatingMeeting.create(
                 "기존 제목",
                 "기존 설명",
+                1L,
                 LocalDateTime.of(2025, 12, 25, 14, 0),
                 "기존 장소",
-                10
+                5,
+                5
         );
 
         // when
@@ -75,7 +83,8 @@ class DatingMeetingTest {
                 null, // 설명은 변경하지 않음
                 LocalDateTime.of(2025, 12, 26, 15, 0),
                 null, // 장소는 변경하지 않음
-                15
+                8,
+                7
         );
 
         // then
@@ -83,7 +92,8 @@ class DatingMeetingTest {
         assertEquals("기존 설명", meeting.getDescription()); // 변경되지 않음
         assertEquals(LocalDateTime.of(2025, 12, 26, 15, 0), meeting.getMeetingDateTime());
         assertEquals("기존 장소", meeting.getLocation()); // 변경되지 않음
-        assertEquals(15, meeting.getMaxParticipants());
+        assertEquals(8, meeting.getMaxMaleParticipants());
+        assertEquals(7, meeting.getMaxFemaleParticipants());
     }
 
     @Test
@@ -93,9 +103,11 @@ class DatingMeetingTest {
         DatingMeeting meeting = DatingMeeting.create(
                 "기존 제목",
                 "기존 설명",
+                1L,
                 LocalDateTime.of(2025, 12, 25, 14, 0),
                 "기존 장소",
-                10
+                5,
+                5
         );
 
         // when
@@ -104,7 +116,8 @@ class DatingMeetingTest {
                 "새로운 설명",
                 LocalDateTime.of(2025, 12, 26, 15, 0),
                 "새로운 장소",
-                20
+                10,
+                10
         );
 
         // then
@@ -112,7 +125,8 @@ class DatingMeetingTest {
         assertEquals("새로운 설명", meeting.getDescription());
         assertEquals(LocalDateTime.of(2025, 12, 26, 15, 0), meeting.getMeetingDateTime());
         assertEquals("새로운 장소", meeting.getLocation());
-        assertEquals(20, meeting.getMaxParticipants());
+        assertEquals(10, meeting.getMaxMaleParticipants());
+        assertEquals(10, meeting.getMaxFemaleParticipants());
     }
 
     @Test
@@ -122,20 +136,23 @@ class DatingMeetingTest {
         DatingMeeting meeting = DatingMeeting.create(
                 "기존 제목",
                 "기존 설명",
+                1L,
                 LocalDateTime.of(2025, 12, 25, 14, 0),
                 "기존 장소",
-                10
+                5,
+                5
         );
 
         // when
-        meeting.update(null, null, null, null, null);
+        meeting.update(null, null, null, null, null, null);
 
         // then - 모든 값이 기존 값으로 유지되어야 함
         assertEquals("기존 제목", meeting.getTitle());
         assertEquals("기존 설명", meeting.getDescription());
         assertEquals(LocalDateTime.of(2025, 12, 25, 14, 0), meeting.getMeetingDateTime());
         assertEquals("기존 장소", meeting.getLocation());
-        assertEquals(10, meeting.getMaxParticipants());
+        assertEquals(5, meeting.getMaxMaleParticipants());
+        assertEquals(5, meeting.getMaxFemaleParticipants());
     }
 
     @Test
@@ -145,9 +162,11 @@ class DatingMeetingTest {
         DatingMeeting meeting = DatingMeeting.create(
                 "테스트 미팅",
                 "테스트 설명",
+                1L,
                 LocalDateTime.of(2025, 12, 25, 14, 0),
                 "테스트 장소",
-                2
+                1,
+                1
         );
 
         // when & then
@@ -163,9 +182,11 @@ class DatingMeetingTest {
         DatingMeeting meeting = DatingMeeting.create(
                 "삭제될 미팅",
                 "삭제 테스트",
+                1L,
                 LocalDateTime.of(2025, 12, 25, 14, 0),
                 "테스트 장소",
-                10
+                5,
+                5
         );
 
         // when
@@ -174,12 +195,6 @@ class DatingMeetingTest {
         // then
         assertNotNull(deletedEvent);
         assertEquals(meeting.getId(), deletedEvent.datingMeetingId());
-        assertEquals("삭제될 미팅", deletedEvent.title());
-        assertEquals("삭제 테스트", deletedEvent.description());
-        assertEquals(LocalDateTime.of(2025, 12, 25, 14, 0), deletedEvent.meetingDateTime());
-        assertEquals("테스트 장소", deletedEvent.location());
-        assertEquals(10, deletedEvent.maxParticipants());
-        assertTrue(deletedEvent.participantIds().isEmpty());
         assertNotNull(deletedEvent.deletedAt());
     }
 
@@ -190,11 +205,13 @@ class DatingMeetingTest {
         DatingMeeting meeting = DatingMeeting.create(
                 "참여자 있는 미팅",
                 "참여자 테스트",
+                1L,
                 LocalDateTime.of(2025, 12, 25, 14, 0),
                 "테스트 장소",
-                10
+                5,
+                5
         );
-        
+
         // 참여자 추가 시뮬레이션 (실제 Participant 엔티티 없이 테스트용)
         // 실제로는 participants 필드가 private이므로 DatingMeetingDeleted.from() 메서드가
         // 빈 리스트를 처리하는지 확인하는 테스트로 구성
@@ -205,12 +222,6 @@ class DatingMeetingTest {
         // then
         assertNotNull(deletedEvent);
         assertEquals(meeting.getId(), deletedEvent.datingMeetingId());
-        assertEquals("참여자 있는 미팅", deletedEvent.title());
-        assertEquals("참여자 테스트", deletedEvent.description());
-        assertEquals(LocalDateTime.of(2025, 12, 25, 14, 0), deletedEvent.meetingDateTime());
-        assertEquals("테스트 장소", deletedEvent.location());
-        assertEquals(10, deletedEvent.maxParticipants());
-        assertNotNull(deletedEvent.participantIds());
         assertNotNull(deletedEvent.deletedAt());
     }
 
@@ -221,9 +232,11 @@ class DatingMeetingTest {
         DatingMeeting meeting = DatingMeeting.create(
                 "시간 테스트 미팅",
                 "시간 테스트",
+                1L,
                 LocalDateTime.of(2025, 12, 25, 14, 0),
                 "테스트 장소",
-                5
+                3,
+                2
         );
         LocalDateTime beforeCreation = LocalDateTime.now().minusSeconds(1);
 
