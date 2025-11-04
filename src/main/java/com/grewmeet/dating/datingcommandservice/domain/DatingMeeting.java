@@ -19,8 +19,8 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class DatingMeeting extends BaseEntity {
 
-    @NotBlank
-    @Column(nullable = false, unique = true, updatable = false, length = 36)
+    @NotNull
+    @Column(nullable = false, unique = true, updatable = false, columnDefinition = "BINARY(16)")
     private UUID meetingUuid = UUID.randomUUID();
 
     @NotBlank

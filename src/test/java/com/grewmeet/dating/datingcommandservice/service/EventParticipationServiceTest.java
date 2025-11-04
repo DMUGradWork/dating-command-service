@@ -1,7 +1,10 @@
 package com.grewmeet.dating.datingcommandservice.service;
 
 import com.grewmeet.dating.datingcommandservice.domain.DatingMeeting;
+import com.grewmeet.dating.datingcommandservice.domain.DatingUser;
 import com.grewmeet.dating.datingcommandservice.domain.Participant;
+import com.grewmeet.dating.datingcommandservice.domain.user.Gender;
+import com.grewmeet.dating.datingcommandservice.domain.user.UserRole;
 import com.grewmeet.dating.datingcommandservice.dto.request.JoinEventRequest;
 import com.grewmeet.dating.datingcommandservice.dto.response.ParticipantResponse;
 import com.grewmeet.dating.datingcommandservice.event.OutboxService;
@@ -17,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -45,11 +49,13 @@ class EventParticipationServiceTest {
         datingMeeting = DatingMeeting.create(
                 "테스트 이벤트",
                 "테스트 설명",
+                1L,
                 LocalDateTime.now().plusDays(1),
                 "서울시 강남구",
-                5
+                3,
+                2
         );
-        joinEventRequest = new JoinEventRequest(1L);
+        joinEventRequest = new JoinEventRequest(UUID.randomUUID());
     }
 
     @Test
@@ -57,17 +63,18 @@ class EventParticipationServiceTest {
     void joinEvent_Success() {
         // given
         given(datingMeetingRepository.findById(1L)).willReturn(Optional.of(datingMeeting));
-        
-        Participant savedParticipant = Participant.create(1L, datingMeeting);
+
+        DatingUser testUser = DatingUser.create(UUID.randomUUID(), "2025-Q1", "테스트유저", Gender.MALE, UserRole.GUEST, null);
+        Participant savedParticipant = Participant.create(testUser, datingMeeting);
         given(participantRepository.save(any(Participant.class))).willReturn(savedParticipant);
 
         // when
         ParticipantResponse response = datingMeetingService.joinEvent("1", joinEventRequest);
 
         // then
-        assertThat(response.userId()).isEqualTo(1L);
+        assertThat(response.userId()).isEqualTo(testUser.getId());
         assertThat(response.status()).isEqualTo(Participant.ParticipantStatus.ACTIVE);
-        
+
         verify(participantRepository).save(any(Participant.class));
         verify(outboxService).publishEvent(eq("DatingMeetingParticipantJoined"), eq("DatingMeetingParticipant"), any(), any());
     }
@@ -76,9 +83,10 @@ class EventParticipationServiceTest {
     @DisplayName("이미 참여한 사용자는 재참여 불가")
     void joinEvent_AlreadyParticipating_ThrowsException() {
         // given
-        Participant existingParticipant = Participant.create(1L, datingMeeting);
+        DatingUser testUser = DatingUser.create(UUID.randomUUID(), "2025-Q1", "테스트유저", Gender.MALE, UserRole.GUEST, null);
+        Participant existingParticipant = Participant.create(testUser, datingMeeting);
         datingMeeting.getParticipants().add(existingParticipant);
-        
+
         given(datingMeetingRepository.findById(1L)).willReturn(Optional.of(datingMeeting));
 
         // when & then
@@ -94,15 +102,22 @@ class EventParticipationServiceTest {
     @DisplayName("정원 초과시 참여 불가")
     void joinEvent_EventFull_ThrowsException() {
         // given
-        // 최대 참여자 수만큼 참여자 추가
-        for (int i = 1; i <= 5; i++) {
-            Participant participant = Participant.create((long) i, datingMeeting);
+        // 남성 정원 3명 채우기
+        for (int i = 1; i <= 3; i++) {
+            DatingUser testUser = DatingUser.create(UUID.randomUUID(), "2025-Q1", "남성유저" + i, Gender.MALE, UserRole.GUEST, null);
+            Participant participant = Participant.create(testUser, datingMeeting);
             datingMeeting.getParticipants().add(participant);
         }
-        
+        // 여성 정원 2명 채우기
+        for (int i = 1; i <= 2; i++) {
+            DatingUser testUser = DatingUser.create(UUID.randomUUID(), "2025-Q1", "여성유저" + i, Gender.FEMALE, UserRole.GUEST, null);
+            Participant participant = Participant.create(testUser, datingMeeting);
+            datingMeeting.getParticipants().add(participant);
+        }
+
         given(datingMeetingRepository.findById(1L)).willReturn(Optional.of(datingMeeting));
 
-        JoinEventRequest newUserRequest = new JoinEventRequest(6L);
+        JoinEventRequest newUserRequest = new JoinEventRequest(UUID.randomUUID());
 
         // when & then
         assertThatThrownBy(() -> datingMeetingService.joinEvent("1", newUserRequest))
@@ -132,9 +147,10 @@ class EventParticipationServiceTest {
     @DisplayName("이벤트 탈퇴 성공")
     void leaveEvent_Success() {
         // given
-        Participant participant = Participant.create(1L, datingMeeting);
+        DatingUser testUser = DatingUser.create(UUID.randomUUID(), "2025-Q1", "테스트유저", Gender.MALE, UserRole.GUEST, null);
+        Participant participant = Participant.create(testUser, datingMeeting);
         datingMeeting.getParticipants().add(participant);
-        
+
         given(datingMeetingRepository.findById(1L)).willReturn(Optional.of(datingMeeting));
         given(participantRepository.findByIdAndDatingMeetingId(1L, 1L)).willReturn(Optional.of(participant));
         given(participantRepository.save(any(Participant.class))).willReturn(participant);
@@ -144,7 +160,7 @@ class EventParticipationServiceTest {
 
         // then
         assertThat(participant.getStatus()).isEqualTo(Participant.ParticipantStatus.WITHDRAWN);
-        
+
         verify(participantRepository).save(participant);
         verify(outboxService).publishEvent(eq("DatingMeetingParticipantLeft"), eq("DatingMeetingParticipant"), any(), any());
     }
@@ -153,9 +169,10 @@ class EventParticipationServiceTest {
     @DisplayName("이미 탈퇴한 참여자는 재탈퇴 불가")
     void leaveEvent_AlreadyWithdrawn_ThrowsException() {
         // given
-        Participant participant = Participant.create(1L, datingMeeting);
+        DatingUser testUser = DatingUser.create(UUID.randomUUID(), "2025-Q1", "테스트유저", Gender.MALE, UserRole.GUEST, null);
+        Participant participant = Participant.create(testUser, datingMeeting);
         participant.withdraw(); // 이미 탈퇴 처리
-        
+
         given(datingMeetingRepository.findById(1L)).willReturn(Optional.of(datingMeeting));
         given(participantRepository.findByIdAndDatingMeetingId(1L, 1L)).willReturn(Optional.of(participant));
 

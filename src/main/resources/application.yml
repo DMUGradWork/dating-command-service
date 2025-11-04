@@ -1,0 +1,88 @@
+spring:
+  application:
+    name: dating-command-service
+
+  # MySQL Database Configuration
+  datasource:
+    url: jdbc:mysql://localhost:3306/dating_command?serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true&connectionCollation=utf8mb4_unicode_ci
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: root
+    hikari:
+      connection-init-sql: SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci
+
+  # JPA/Hibernate Configuration
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: update  # 개발: update, 운영: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        use_sql_comments: false
+    open-in-view: false
+
+  # Kafka Configuration
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      properties:
+        spring:
+          json:
+            add:
+              type:
+                headers: false
+    admin:
+      auto-create: true
+
+  # Jackson Configuration
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    time-zone: Asia/Seoul
+
+# Server Configuration
+server:
+  port: 8085
+  error:
+    include-message: always
+    include-binding-errors: always
+
+# Logging Configuration
+logging:
+  level:
+    root: WARN
+    com.grewmeet.dating.datingcommandservice: INFO
+    com.grewmeet.dating.datingcommandservice.event: DEBUG
+    com.grewmeet.dating.datingcommandservice.service: DEBUG
+    org.springframework.kafka: INFO
+    org.hibernate: OFF
+    org.hibernate.SQL: OFF
+    org.hibernate.type: OFF
+    org.hibernate.engine: OFF
+    org.springframework.orm.jpa: OFF
+    org.springframework.boot.autoconfigure: WARN
+
+# Swagger/OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+
+# Management/Actuator Configuration (Optional)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always

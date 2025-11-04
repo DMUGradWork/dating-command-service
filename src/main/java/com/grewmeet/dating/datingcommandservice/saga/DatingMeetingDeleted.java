@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record DatingMeetingDeleted(
-        UUID datingMeetingId,
+        UUID meetingUuid,
         LocalDateTime deletedAt
 ) {
 //    public static DatingMeetingDeleted from(DatingMeeting datingMeeting) {

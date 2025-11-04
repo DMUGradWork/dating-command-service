@@ -14,6 +14,8 @@ public record DatingMeetingCreated(
         String location,
         Integer maxMaleParticipants,
         Integer maxFemaleParticipants,
+        Integer currentMaleParticipants,
+        Integer currentFemaleParticipants,
         LocalDateTime createdAt
 ) {
     public static DatingMeetingCreated from(DatingMeeting datingMeeting, UUID hostAuthUserId, String hostNickname) {
@@ -27,6 +29,8 @@ public record DatingMeetingCreated(
                 datingMeeting.getLocation(),
                 datingMeeting.getMaxMaleParticipants(),
                 datingMeeting.getMaxFemaleParticipants(),
+                datingMeeting.getMaleParticipantsCount(),
+                datingMeeting.getFemaleParticipantsCount(),
                 datingMeeting.getCreatedAt()
         );
     }

@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: dating-command-service
+
+  # H2 Database Configuration for Testing
+  datasource:
+    url: jdbc:h2:mem:dating_command_test
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  # JPA/Hibernate Configuration
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+
+  # Kafka Configuration (disabled for tests)
+  kafka:
+    bootstrap-servers: ${spring.embedded.kafka.brokers:localhost:9092}
+
+# Server Configuration
+server:
+  port: 0
+
+# Logging Configuration
+logging:
+  level:
+    root: WARN
+    com.grewmeet.dating.datingcommandservice: INFO

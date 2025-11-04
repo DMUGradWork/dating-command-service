@@ -44,9 +44,11 @@ class DatingMeetingServiceImplTest {
         existingMeeting = DatingMeeting.create(
                 "기존 제목",
                 "기존 설명",
+                1L,
                 LocalDateTime.of(2025, 12, 25, 14, 0),
                 "기존 장소",
-                10
+                5,
+                5
         );
     }
 
@@ -59,7 +61,8 @@ class DatingMeetingServiceImplTest {
                 null, // 설명은 변경하지 않음
                 LocalDateTime.of(2025, 12, 26, 15, 0),
                 null, // 장소는 변경하지 않음
-                15
+                null,
+                null
         );
 
         given(datingMeetingRepository.findById(meetingId)).willReturn(Optional.of(existingMeeting));
@@ -73,12 +76,12 @@ class DatingMeetingServiceImplTest {
         assertThat(response.description()).isEqualTo("기존 설명"); // 변경되지 않음
         assertThat(response.meetingDateTime()).isEqualTo(LocalDateTime.of(2025, 12, 26, 15, 0));
         assertThat(response.location()).isEqualTo("기존 장소"); // 변경되지 않음
-        assertThat(response.maxParticipants()).isEqualTo(15);
+        assertThat(response.maxParticipants()).isEqualTo(10);
 
         then(outboxService).should().publishEvent(
                 eq("DatingMeetingUpdated"),
                 eq("DatingMeeting"),
-                eq(existingMeeting.getId()),
+                eq(existingMeeting.getMeetingUuid().toString()),
                 any(DatingMeetingUpdated.class)
         );
     }
@@ -92,7 +95,8 @@ class DatingMeetingServiceImplTest {
                 "새로운 설명",
                 LocalDateTime.of(2025, 12, 26, 15, 0),
                 "새로운 장소",
-                20
+                10,
+                10
         );
 
         given(datingMeetingRepository.findById(meetingId)).willReturn(Optional.of(existingMeeting));
@@ -118,6 +122,7 @@ class DatingMeetingServiceImplTest {
                 null,
                 null,
                 null,
+                null,
                 null
         );
 
@@ -135,6 +140,7 @@ class DatingMeetingServiceImplTest {
         // given
         UpdateDatingMeetingRequest request = new UpdateDatingMeetingRequest(
                 "새로운 제목",
+                null,
                 null,
                 null,
                 null,

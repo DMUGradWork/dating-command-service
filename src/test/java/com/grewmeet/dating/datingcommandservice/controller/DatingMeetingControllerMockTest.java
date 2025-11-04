@@ -42,7 +42,8 @@ class DatingMeetingControllerTest {
                 null,
                 LocalDateTime.of(2025, 12, 26, 15, 0),
                 null,
-                15
+                null,
+                null
         );
 
         DatingMeetingResponse expectedResponse = new DatingMeetingResponse(
@@ -80,6 +81,7 @@ class DatingMeetingControllerTest {
                 null,
                 null,
                 null,
+                null,
                 null
         );
 
@@ -99,6 +101,7 @@ class DatingMeetingControllerTest {
                 null,
                 null,
                 LocalDateTime.of(2020, 1, 1, 10, 0), // 과거 시간
+                null,
                 null,
                 null
         );
@@ -120,7 +123,8 @@ class DatingMeetingControllerTest {
                 null,
                 null,
                 null,
-                1 // 최소 2명 미만
+                0, // 최소 1명 미만
+                null
         );
 
         // when & then
