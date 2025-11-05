@@ -68,6 +68,28 @@
 }
 ```
 
+**DatingMeetingParticipantJoined**
+```json
+{
+  "meetingUuid": "550e8400-e29b-41d4-a716-446655440000",
+  "authUserId": "650e8400-e29b-41d4-a716-446655440001",
+  "gender": "MALE",
+  "meetingTitle": "인코딩 테스트 미팅",
+  "meetingDateTime": "2025-12-01T19:00:00",
+  "joinedAt": "2025-11-04T18:20:00"
+}
+```
+
+**DatingMeetingParticipantLeft**
+```json
+{
+  "meetingUuid": "550e8400-e29b-41d4-a716-446655440000",
+  "authUserId": "650e8400-e29b-41d4-a716-446655440001",
+  "gender": "MALE",
+  "leftAt": "2025-11-04T18:45:00"
+}
+```
+
 ## 🚀 실행
 ```bash
 ./gradlew bootRun
